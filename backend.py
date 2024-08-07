@@ -30,6 +30,17 @@ def extract_sql_code(response):
         return match.group(1).strip()
     return response.strip()
 
+
+def get_schema_from_file(filename='database_schema.txt'):
+    try:
+        with open(filename, 'r') as file:
+            schema = file.read()
+        return schema
+    except Exception as e:
+        logger.error(f"Error reading schema file: {e}")
+        raise HTTPException(status_code=500, detail="Failed to read schema file")
+    
+
 def connect_to_db():
     connection = psycopg2.connect(
         dbname=DB_NAME,
@@ -52,13 +63,15 @@ async def generate_query(request: QueryRequest):
         raise HTTPException(status_code=500, detail="OpenAI API key not found")
 
     openai.api_key = api_key
+    schema = get_schema_from_file()
+
 
     try:
         response = openai.ChatCompletion.create(
             model="gpt-4o",  # Ensure this is the correct model
             messages=[
                 {"role": "system", "content": "You are a helpful assistant that converts natural language requests into SQL queries."},
-                {"role": "user", "content": f"Generate an SQL query for the following request: {user_input}"}
+                {"role": "user", "content": f"Based on the following database schema, generate an SQL query for this request: {user_input}\n\nSchema:\n{schema}"}
             ]
         )
         raw_response = response.choices[0].message["content"].strip()
