@@ -16,10 +16,10 @@ class QueryRequest(BaseModel):
     user_input: str
 
 # Database connection parameters
-DB_NAME = "pagila"
-DB_USER = "postgres"
-DB_PASSWORD = "Voodoo/420"
-DB_HOST = "localhost"
+DB_NAME = os.getenv("DB_NAME")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_HOST = os.getenv("DB_HOST")
 
 def connect_to_db():
     connection = psycopg2.connect(
@@ -46,7 +46,7 @@ async def generate_query(request: QueryRequest):
 
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-4",  # Ensure this is the correct model
+            model="gpt-3.5-turbo",  # Ensure this is the correct model
             messages=[
                 {"role": "system", "content": "You are a helpful assistant that converts natural language requests into SQL queries."},
                 {"role": "user", "content": f"Generate an SQL query for the following request: {user_input}"}
@@ -54,9 +54,11 @@ async def generate_query(request: QueryRequest):
         )
         sql_query = response.choices[0].message["content"].strip()
         return {"sql_query": sql_query}
+    
     except Exception as e:
         logger.error(f"Error generating query: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to generate SQL query: {e}")
+    
 
 @app.post("/execute_query/")
 async def execute_query(query: QueryRequest):
