@@ -5,6 +5,8 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import openai
 import os
+import re
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -16,10 +18,17 @@ class QueryRequest(BaseModel):
     user_input: str
 
 # Database connection parameters
-DB_NAME = os.getenv("DB_NAME")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_HOST = os.getenv("DB_HOST")
+DB_NAME = "pagila"
+DB_USER = "postgres"
+DB_PASSWORD = "Voodoo/420"
+DB_HOST = "localhost"
+
+def extract_sql_code(response):
+    # Adjust regex pattern based on the expected format of the SQL code
+    match = re.search(r'```sql(.*?)```', response, re.DOTALL)
+    if match:
+        return match.group(1).strip()
+    return response.strip()
 
 def connect_to_db():
     connection = psycopg2.connect(
@@ -46,13 +55,17 @@ async def generate_query(request: QueryRequest):
 
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # Ensure this is the correct model
+            model="gpt-4o",  # Ensure this is the correct model
             messages=[
                 {"role": "system", "content": "You are a helpful assistant that converts natural language requests into SQL queries."},
                 {"role": "user", "content": f"Generate an SQL query for the following request: {user_input}"}
             ]
         )
-        sql_query = response.choices[0].message["content"].strip()
+        raw_response = response.choices[0].message["content"].strip()
+        
+        # Extract SQL code using regex
+        sql_query = extract_sql_code(raw_response)
+        
         return {"sql_query": sql_query}
     
     except Exception as e:

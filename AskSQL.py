@@ -31,8 +31,6 @@ if st.button("Generate and Execute Query"):
         # Execute SQL query
         execute_response = requests.post(f"{API_URL}/execute_query/", json={"user_input": sql_query})
         execute_response.raise_for_status()
-        st.write("Raw execute response:")
-        st.write(execute_response.text)  # Log the raw response content
 
         result = execute_response.json().get("result")
         st.write("Query Result:")
