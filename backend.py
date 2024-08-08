@@ -8,6 +8,7 @@ import os
 import re
 
 
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -28,6 +29,7 @@ def extract_sql_code(response):
     match = re.search(r'```sql(.*?)```', response, re.DOTALL)
     if match:
         return match.group(1).strip()
+    # If no SQL code is detected, return the whole response (or handle accordingly)
     return response.strip()
 
 
@@ -94,16 +96,26 @@ async def execute_query(query: QueryRequest):
     try:
         logger.info(f"Executing SQL Query: {sql_query}")
         cursor.execute(sql_query)
-        result = cursor.fetchall()
-        logger.info(f"Query Result: {result}")
-        return {"result": result}
+        
+        # Handle different types of queries
+        if sql_query.strip().lower().startswith(('select', 'show')):
+            result = cursor.fetchall()
+            logger.info(f"Query Result: {result}")
+            return {"result": result}
+        else:
+            connection.commit()  # Commit changes for non-SELECT queries
+            logger.info("Query executed successfully")
+            return {"message": "Success", "status": "Done"}
+    
     except Exception as e:
         connection.rollback()
         logger.error(f"Error executing SQL query: {e}")
-        raise HTTPException(status_code=500, detail="Failed to execute SQL query")
+        raise HTTPException(status_code=500, detail=f"Failed to execute SQL query: {e}")
+    
     finally:
         cursor.close()
         connection.close()
+
 
 if __name__ == "__main__":
     import uvicorn

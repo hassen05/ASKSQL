@@ -1,0 +1,1 @@
+[{"prompt": "how many horror movies is there", "query": "SELECT COUNT(*) AS horror_movie_count\nFROM film\nJOIN film_category ON film.film_id = film_category.film_id\nJOIN category ON film_category.category_id = category.category_id\nWHERE category.name = 'Horror';", "result": [{"horror_movie_count": 142}]}]
