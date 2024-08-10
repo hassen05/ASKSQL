@@ -16,6 +16,13 @@ Table: city
   city (text)
   country_id (integer)
   last_update (timestamp with time zone)
+Table: actor
+  actor_id (integer)
+  first_name (text)
+  last_name (text)
+  last_update (timestamp with time zone)
+  age (integer)
+  gender (text)
 Table: actor_info
   actor_id (integer)
   first_name (text)
@@ -96,12 +103,6 @@ Table: language
   language_id (integer)
   name (character)
   last_update (timestamp with time zone)
-Table: actor
-  actor_id (integer)
-  first_name (text)
-  last_name (text)
-  last_update (timestamp with time zone)
-  age (integer)
 Table: sales_by_film_category
   category (text)
   total_sales (numeric)

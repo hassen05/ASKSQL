@@ -6,8 +6,7 @@ from pydantic import BaseModel
 import openai
 import os
 import re
-
-
+from schema_manager import save_schema_to_file  # Import the schema management function
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -31,7 +30,6 @@ def extract_sql_code(response):
         return match.group(1).strip()
     # If no SQL code is detected, return the whole response (or handle accordingly)
     return response.strip()
-
 
 def get_schema_from_file(filename='database_schema.txt'):
     try:
@@ -67,10 +65,9 @@ async def generate_query(request: QueryRequest):
     openai.api_key = api_key
     schema = get_schema_from_file()
 
-
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-4o",  # Ensure this is the correct model
+            model="gpt-4o-mini",  # Ensure this is the correct model
             messages=[
                 {"role": "system", "content": "You are a helpful assistant that converts natural language requests into SQL queries."},
                 {"role": "user", "content": f"Based on the following database schema, generate an SQL query for this request: {user_input}\n\nSchema:\n{schema}"}
@@ -90,6 +87,9 @@ async def generate_query(request: QueryRequest):
 
 @app.post("/execute_query/")
 async def execute_query(query: QueryRequest):
+    # Update the schema before executing the query
+    save_schema_to_file('database_schema.txt')
+
     sql_query = query.user_input
     connection = connect_to_db()
     cursor = connection.cursor(cursor_factory=RealDictCursor)
@@ -115,7 +115,6 @@ async def execute_query(query: QueryRequest):
     finally:
         cursor.close()
         connection.close()
-
 
 if __name__ == "__main__":
     import uvicorn
